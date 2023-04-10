@@ -62,7 +62,7 @@ function Save-JSON {
     }
 
     # Convert the data to JSON and save it to the file
-    $data | ConvertTo-Json -Depth 10 | Out-File -FilePath $fullPath
+    $data | ConvertTo-Json -Depth 100 | Out-File $fullPath
 
     Write-Output "Data saved to '$fullPath'"
 
