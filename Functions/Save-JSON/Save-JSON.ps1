@@ -38,7 +38,7 @@ function Save-JSON {
 
         [Parameter(Mandatory = $false)]
         [Alias("ibd")]
-        [bool]$includeBaseDirectory = $true
+        [bool]$includeBaseDirectory = $false
     )
 
     # Include base user directory
@@ -48,17 +48,17 @@ function Save-JSON {
         $path = Join-Path $userDir $path
     }
 
+    # Add .json extension if not provided
+    if (-not $filename.ToLower().Contains(".json")) { 
+        $fileName = $fileName + ".json"
+    }
+
     # Combine the path and filename
     $fullPath = Join-Path -Path $path -ChildPath $filename
     
     # Create the destination path if it does not exist
     if (-not (Test-Path $fullPath)) {
         New-Item -ItemType Directory -Path $fullPath | Out-Null
-    }
-    
-    # add .json extension if not provided
-    if (-not $filename.ToLower().Contains(".json")) { 
-        $fileName = $fileName + ".json"
     }
 
     # Convert the data to JSON and save it to the file
