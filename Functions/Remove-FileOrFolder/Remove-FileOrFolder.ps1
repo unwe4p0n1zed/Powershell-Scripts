@@ -12,7 +12,7 @@
 #  github.com/unwe4p0n1zed                                                tiktok.com/@unwe4p0n1zed                                                                          #
 #  twitter.com/unwe4p0n1zed                                               youtube.com/@unwe4p0n1zed                                                                         #
 #                                                                                                                                                                           #
-#  Title: Remove-FileOrFolder                                                                                                                                                    #
+#  Title: Remove-FileOrFolder                                                                                                                                               #
 #  Description: This PowerShell code removes a file or folder at a specified path.                                                                                          #
 #___________________________________________________________________________________________________________________________________________________________________________#
 #                                             __  __________  _      ______________ __  ________   ___  __________  ____     __                                             #
